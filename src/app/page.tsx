@@ -1,101 +1,149 @@
+"use client";
+
+import { motion, useMotionValue, useTransform } from "motion/react";
 import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+	const constaintRef = useRef<HTMLDivElement>(null);
+	const [items, setItems] = useState<{ id: number; zIndex: number; color: string }[]>(
+		Array.from({ length: 3 }, (_, index) => {
+			return {
+				id: index,
+				zIndex: index + 1,
+				color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+			};
+		})
+	);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+	const [dragValue, setDragValue] = useState(0);
+
+	return (
+		<div className="flex justify-center w-full min-h-screen items-center">
+			<div className="grid gap-2" ref={constaintRef}>
+				{items.map((item, index) => {
+					return (
+						<Item
+							constaintRef={constaintRef}
+							item={item}
+							index={index}
+							key={item.id}
+							isDraggable={index === items.length - 1}
+							dragValue={dragValue}
+							onChangeSort={() => {
+								const temp = [...items];
+								const tempItem = temp[index];
+								temp.pop();
+								temp.unshift(tempItem);
+								setItems(temp);
+							}}
+							onSaveDragValue={(x) => {
+								setDragValue(x);
+							}}
+						/>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
+function Item({
+	item,
+	index,
+	constaintRef,
+	onChangeSort,
+	onSaveDragValue,
+	isDraggable,
+	dragValue,
+}: {
+	item: { id: number; zIndex: number; color: string };
+	index: number;
+	onChangeSort: () => void;
+	onSaveDragValue: (x: number) => void;
+	constaintRef: React.RefObject<HTMLDivElement>;
+	isDraggable: boolean;
+	dragValue: number;
+}) {
+	let itemScale = 1;
+	let itemX = 0;
+	let itemRotate = 0;
+	if (index === 0) {
+		console.log({ dragValue });
+		if (Math.abs(dragValue) > 0) {
+			const temp = Math.abs(dragValue) > 200 ? 200 : Math.abs(dragValue);
+			// drag value is from 0 to 200px
+			// scale should respect that ratio from 0.9 to 1
+			itemScale = 0.9 + (temp / 200) * 0.1;
+		} else {
+			itemScale = 0.9;
+		}
+		itemX = 100;
+		itemRotate = -3;
+	}
+	if (index === 1) {
+		if (Math.abs(dragValue) > 0) {
+			const temp = Math.abs(dragValue) > 125 ? 125 : Math.abs(dragValue);
+			itemScale = 0.9 + (temp / 125) * 0.1;
+		} else {
+			itemScale = 0.9;
+		}
+		itemX = 80;
+		itemRotate = 3;
+	}
+	if (index === 2) {
+		itemScale = 1.1;
+		itemX = 0;
+		itemRotate = -3;
+	}
+
+	return (
+		<motion.div
+			key={item.id}
+			className="bg-gray-50 aspect-[9/12] w-[350px] rounded-2xl text-black text-6xl 
+    flex items-center justify-center row-span-full col-span-full
+     relative overflow-hidden border-2 border-black"
+			style={{
+				filter: "drop-shadow(7px 5px 0px rgba(0,0,0,1))",
+			}}
+			animate={{
+				scale: itemScale,
+				x: itemX,
+				rotate: itemRotate,
+			}}
+			transition={{
+				duration: 0.5,
+				ease: "linear",
+			}}
+			drag={isDraggable ? "x" : false}
+			draggable={isDraggable}
+			onDragEnd={(event, info) => {
+				console.log(event, info);
+				if (Math.abs(info.offset.x) > 200) {
+					onChangeSort();
+					onSaveDragValue(0);
+				}
+			}}
+			onDrag={(event, info) => {
+				if (isDraggable) {
+					onSaveDragValue(info.offset.x);
+				}
+			}}
+			dragConstraints={constaintRef}
+			// dragElastic={0.5}
+			// dragTransition={{
+			// 	min: 0,
+			// 	max: 100,
+			// 	friction: 1,
+			// }}
+		>
+			{/* random portrate image from internet */}
+			<Image
+				src={`https://picsum.photos/400/530?random=${item.id}`}
+				alt="random image"
+				fill
+				className="object-cover pointer-events-none"
+			/>
+		</motion.div>
+	);
 }
