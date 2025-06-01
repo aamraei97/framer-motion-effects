@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useMotionValue, useTransform } from "motion/react";
+import { motion } from "motion/react";
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, } from "react";
 
 export default function Home() {
 	const constaintRef = useRef<HTMLDivElement>(null);
@@ -130,12 +130,12 @@ function Item({
 				}
 			}}
 			dragConstraints={constaintRef}
-			// dragElastic={0.5}
-			// dragTransition={{
-			// 	min: 0,
-			// 	max: 100,
-			// 	friction: 1,
-			// }}
+		// dragElastic={0.5}
+		// dragTransition={{
+		// 	min: 0,
+		// 	max: 100,
+		// 	friction: 1,
+		// }}
 		>
 			{/* random portrate image from internet */}
 			<Image
